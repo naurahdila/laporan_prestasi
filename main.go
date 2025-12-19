@@ -10,9 +10,7 @@ import (
 	"pelaporan_prestasi/database"
 	"pelaporan_prestasi/middleware"
 
-	// CEK FOLDER: Jika file route.go ada di folder "app/route", gunakan ini:
 	"pelaporan_prestasi/route"
-	// Jika file route.go ada di folder root "route", gunakan: "pelaporan_prestasi/route"
 
 	"pelaporan_prestasi/app/service"
 
@@ -20,7 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	_ "pelaporan_prestasi/docs" // Swagger docs
+	_ "pelaporan_prestasi/docs" 
 )
 
 // @title           Sistem Pelaporan Prestasi API
@@ -32,12 +30,10 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	// 1. Load Env
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found")
 	}
 
-	// 2. Koneksi PostgreSQL
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		os.Getenv("POSTGRES_USER"),
 		os.Getenv("POSTGRES_PASSWORD"),
@@ -52,7 +48,6 @@ func main() {
 	defer pgPool.Close()
 	fmt.Println("✅ PostgreSQL Connected!")
 
-	// 3. Koneksi MongoDB
 	mongoDB, err := database.InitMongo()
 	if err != nil {
 		log.Fatal("Gagal connect ke MongoDB:", err)
@@ -75,13 +70,11 @@ func main() {
 	reportRepo := repository.NewReportRepository(pgPool)
 	reportService := service.NewReportService(reportRepo, mhsRepo, achRepo)
 
-	// 5. Setup Router
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
 	route.SetupRouter(r, authService, userService, achService, mhsService, dosenService, reportService)
 
-	// 6. Run Server
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"

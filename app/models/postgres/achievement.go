@@ -6,7 +6,7 @@ type AchievementReference struct {
 	ID                 string     `json:"id"`
 	StudentID          string     `json:"student_id"`
 	MongoAchievementID string     `json:"mongo_achievement_id"`
-	Status             string     `json:"status"` // DRAFT, PENDING, VERIFIED, REJECTED
+	Status             string     `json:"status"`
 	RejectionNote      *string    `json:"rejection_note,omitempty"`
 	VerifiedBy         *string    `json:"verified_by,omitempty"`
 	VerifiedAt         *time.Time `json:"verified_at,omitempty"`

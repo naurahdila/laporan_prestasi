@@ -24,15 +24,12 @@ func (r *ReportRepository) GetGlobalStats(ctx context.Context) (*GlobalStatistic
 		PrestasiByStatus: make(map[string]int),
 	}
 
-	// Hitung Total Mahasiswa
 	err := r.PgPool.QueryRow(ctx, "SELECT COUNT(*) FROM mahasiswa").Scan(&stats.TotalMahasiswa)
 	if err != nil { return nil, err }
 
-	// Hitung Total Prestasi
 	err = r.PgPool.QueryRow(ctx, "SELECT COUNT(*) FROM achievement_references").Scan(&stats.TotalPrestasi)
 	if err != nil { return nil, err }
 
-	// Hitung berdasarkan status (PENDING, VERIFIED, REJECTED)
 	rows, err := r.PgPool.Query(ctx, "SELECT status, COUNT(*) FROM achievement_references GROUP BY status")
 	if err != nil { return nil, err }
 	defer rows.Close()

@@ -44,8 +44,6 @@ type UpdateRoleRequest struct {
 	RoleID string `json:"role_id" binding:"required" example:"33333333-3333-3333-3333-333333333333"`
 }
 
-// --- 1. GET ALL USERS (ADMIN ONLY) ---
-
 // GetAllUsers godoc
 // @Summary      Get All Users
 // @Description  Hanya Admin.
@@ -67,8 +65,6 @@ func (s *UserService) GetAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": users})
 }
 
-// --- 2. GET USER BY ID (ADMIN & SELF) ---
-
 // GetUserByID godoc
 // @Summary      Get User Detail
 // @Description  Admin bisa lihat siapa saja. User biasa hanya bisa lihat dirinya sendiri.
@@ -84,7 +80,6 @@ func (s *UserService) GetUserByID(c *gin.Context) {
 	myRoleID := c.GetString("role_id")
 	targetUserID := c.Param("id")
 
-	// PROTEKSI: Jika BUKAN Admin DAN ID target BUKAN ID SAYA -> TOLAK
 	if myRoleID != RoleAdmin {
 		if myUserID != targetUserID {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak boleh melihat data user lain!"})
@@ -97,12 +92,10 @@ func (s *UserService) GetUserByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
 		return
 	}
-	// Kosongkan password hash biar aman
 	user.PasswordHash = ""
 	c.JSON(http.StatusOK, gin.H{"data": user})
 }
 
-// --- 3. CREATE USER (ADMIN ONLY) ---
 
 // CreateUser godoc
 // @Summary      Create User (Manual)
@@ -140,8 +133,6 @@ func (s *UserService) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"status": "success", "data": newUser})
 }
 
-// --- 4. UPDATE USER (ADMIN & SELF) ---
-
 // UpdateUser godoc
 // @Summary      Update User Data (Nama/Email)
 // @Description  Admin bebas edit. User biasa hanya edit diri sendiri.
@@ -169,7 +160,6 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Proteksi: User biasa tidak boleh ganti RoleID lewat endpoint ini
 	if myRoleID != RoleAdmin && input.RoleID != "" {
 		input.RoleID = myRoleID
 	}
@@ -188,8 +178,6 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "User updated"})
 }
 
-// --- 5. UPDATE ROLE (ADMIN ONLY) ---
-
 // UpdateRole godoc
 // @Summary      Change User Role (Promote/Demote)
 // @Description  Khusus Admin untuk mengubah jabatan user.
@@ -201,21 +189,16 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 // @Failure      403  {object} map[string]string "Forbidden"
 // @Router       /users/{id}/role [put]
 func (s *UserService) UpdateRole(c *gin.Context) {
-	// 1. Cek Admin
 	if c.GetString("role_id") != RoleAdmin {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya Admin yang boleh ganti role!"})
 		return
 	}
-
-	// 2. Ambil Input
 	id := c.Param("id")
 	var input UpdateRoleRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// 3. Update ke Repo
 	if err := s.UserRepo.UpdateRole(c.Request.Context(), id, input.RoleID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update role"})
 		return
@@ -223,8 +206,6 @@ func (s *UserService) UpdateRole(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Role berhasil diubah"})
 }
-
-// --- 6. DELETE USER (ADMIN ONLY) ---
 
 // DeleteUser godoc
 // @Summary      Soft Delete User

@@ -16,8 +16,6 @@ type UserRepository struct {
 func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{DB: db}
 }
-
-// FindByUsername untuk Login
 func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*postgres.User, error) {
 	query := `
 		SELECT u.id, u.username, u.email, u.password_hash, u.full_name, u.role_id, r.name as role_name, u.is_active
@@ -26,7 +24,6 @@ func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*
 		WHERE u.username = $1
 	`
 	var user postgres.User
-	// Scan role_name ke field sementara atau abaikan jika belum butuh di struct User
 	var roleName string 
 
 	err := r.DB.QueryRow(ctx, query, username).Scan(
@@ -42,7 +39,6 @@ func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*
 	return &user, nil
 }
 
-// FindByID untuk Get Profile
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*postgres.User, error) {
 	query := `
 		SELECT u.id, u.username, u.email, u.full_name, u.role_id, r.name
@@ -60,7 +56,6 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*postgres.Use
 	if err != nil {
 		return nil, err
 	}
-	// Opsional: Kamu bisa masukkan roleName ke struct User jika ada fieldnya
 	return &user, nil
 }
 
@@ -80,7 +75,7 @@ func (r *UserRepository) FindAll(ctx context.Context) ([]postgres.User, error) {
 	var users []postgres.User
 	for rows.Next() {
 		var user postgres.User
-		var roleName string // Variable dummy buat nampung role name jika belum ada di struct User
+		var roleName string 
 		err := rows.Scan(
 			&user.ID, &user.Username, &user.Email, &user.FullName, 
 			&user.RoleID, &roleName, &user.IsActive, &user.CreatedAt,
@@ -93,14 +88,12 @@ func (r *UserRepository) FindAll(ctx context.Context) ([]postgres.User, error) {
 	return users, nil
 }
 
-// Create - Menambah user baru
 func (r *UserRepository) Create(ctx context.Context, user *postgres.User) error {
 	query := `
 		INSERT INTO users (username, email, password_hash, full_name, role_id, is_active, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
 		RETURNING id
 	`
-	// Perhatikan urutan variabelnya
 	err := r.DB.QueryRow(ctx, query,
 		user.Username, user.Email, user.PasswordHash, user.FullName, user.RoleID, true,
 	).Scan(&user.ID)
@@ -108,7 +101,6 @@ func (r *UserRepository) Create(ctx context.Context, user *postgres.User) error 
 	return err
 }
 
-// Update - Mengubah data user
 func (r *UserRepository) Update(ctx context.Context, user *postgres.User) error {
 	query := `
 		UPDATE users 
@@ -119,7 +111,6 @@ func (r *UserRepository) Update(ctx context.Context, user *postgres.User) error 
 	return err
 }
 
-// UpdatePassword - Khusus ganti password (terpisah biar aman)
 func (r *UserRepository) UpdatePassword(ctx context.Context, userID, newHash string) error {
 	query := `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`
 	_, err := r.DB.Exec(ctx, query, newHash, userID)
@@ -132,7 +123,6 @@ func (r *UserRepository) UpdateRole(ctx context.Context, userID, roleID string) 
 	return err
 }
 
-// Delete - Soft Delete (Ubah is_active jadi false)
 func (r *UserRepository) Delete(ctx context.Context, id string) error {
 	query := `UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1`
 	_, err := r.DB.Exec(ctx, query, id)

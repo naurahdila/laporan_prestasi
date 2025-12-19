@@ -66,7 +66,6 @@ func (r *MahasiswaRepository) GetByID(ctx context.Context, id string) (*Mahasisw
         WHERE m.id = $1`
     
     var m MahasiswaData
-    // Pastikan Scan urutannya sama persis dengan SELECT di atas
     err := r.PgPool.QueryRow(ctx, query, id).Scan(
         &m.ID, &m.UserID, &m.Name, &m.NIM, &m.ProgramStudy, &m.AcademicYear,
         &m.AdvisorName, &m.AdvisorID, &m.AdvisorUserID,

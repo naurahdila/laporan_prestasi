@@ -25,13 +25,10 @@ func NewAuthService(userRepo *repository.UserRepository, secret string) *AuthSer
 	}
 }
 
-// LoginRequest struct
 type LoginRequest struct {
 	Username string `json:"username" binding:"required" example:"mahasiswa123"`
 	Password string `json:"password" binding:"required" example:"password123"`
 }
-
-// --- 1. LOGIN ---
 
 // Login godoc
 // @Summary      Login User
@@ -56,7 +53,6 @@ func (s *AuthService) Login(c *gin.Context) {
 		return
 	}
 
-	// PENGAMAN: Bersihkan spasi di database sebelum cek password
 	cleanHash := strings.TrimSpace(user.PasswordHash)
 
 	if err := bcrypt.CompareHashAndPassword([]byte(cleanHash), []byte(input.Password)); err != nil {
@@ -65,8 +61,8 @@ func (s *AuthService) Login(c *gin.Context) {
 	}
 
 	// Generate Token
-	accessToken, _ := s.generateToken(user.ID, user.RoleID, time.Hour*2)      // Expire 2 jam
-	refreshToken, _ := s.generateToken(user.ID, user.RoleID, time.Hour*72)    // Expire 3 hari
+	accessToken, _ := s.generateToken(user.ID, user.RoleID, time.Hour*2)      
+	refreshToken, _ := s.generateToken(user.ID, user.RoleID, time.Hour*72)   
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
@@ -83,7 +79,6 @@ func (s *AuthService) Login(c *gin.Context) {
 	})
 }
 
-// --- 2. REFRESH TOKEN ---
 
 // RefreshToken godoc
 // @Summary      Refresh Access Token
@@ -103,15 +98,12 @@ func (s *AuthService) Refresh(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh token required"})
 		return
 	}
-
-	// Validasi Token
 	claims, err := s.validateToken(input.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
 		return
 	}
 
-	// Generate Token Baru
 	userID := claims["user_id"].(string)
 	roleID := claims["role_id"].(string)
 	newAccessToken, _ := s.generateToken(userID, roleID, time.Hour*2)
@@ -124,8 +116,6 @@ func (s *AuthService) Refresh(c *gin.Context) {
 	})
 }
 
-// --- 3. LOGOUT ---
-
 // Logout godoc
 // @Summary      Logout User
 // @Description  Keluar dari sistem
@@ -134,12 +124,9 @@ func (s *AuthService) Refresh(c *gin.Context) {
 // @Success      200  {object} map[string]string
 // @Router       /auth/logout [post]
 func (s *AuthService) Logout(c *gin.Context) {
-	// Karena stateless, di backend hanya return success.
-	// Di frontend nanti token dihapus dari localStorage.
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Logged out successfully"})
 }
 
-// --- 4. PROFILE ---
 
 // GetProfile godoc
 // @Summary      Get User Profile
@@ -155,7 +142,6 @@ func (s *AuthService) Profile(c *gin.Context) {
 		return
 	}
 	
-	// Hapus prefix "Bearer " jika ada
 	tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
 	
 	claims, err := s.validateToken(tokenString)
@@ -166,7 +152,6 @@ func (s *AuthService) Profile(c *gin.Context) {
 
 	userID := claims["user_id"].(string)
 
-	// Cari user di DB berdasarkan ID dari token
 	user, err := s.UserRepo.FindByID(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -178,8 +163,6 @@ func (s *AuthService) Profile(c *gin.Context) {
 		"data": user,
 	})
 }
-
-// --- HELPER FUNCTIONS ---
 
 func (s *AuthService) generateToken(userID, roleID string, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{

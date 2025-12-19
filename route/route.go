@@ -11,25 +11,20 @@ import (
 
 func SetupRouter(r *gin.Engine, authService *service.AuthService, userService *service.UserService, achService *service.AchievementService, mhsService *service.MahasiswaService, dosenService *service.DosenService, reportService *service.ReportService) {
 
-	// Swagger (Dokumentasi API)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := r.Group("/api/v1")
 	{
 		auth := api.Group("/auth")
 		{
-			// Endpoint yang sudah jalan
 			auth.POST("/login", authService.Login)
-
-			// Endpoint BARU (Wajib ditambahkan biar gak 404)
-			auth.POST("/refresh", authService.Refresh) // Refresh Token
-			auth.POST("/logout", authService.Logout)   // Logout
-			auth.GET("/profile", authService.Profile)  // Get Profile (Butuh Token)
+			auth.POST("/refresh", authService.Refresh) 
+			auth.POST("/logout", authService.Logout)   
+			auth.GET("/profile", authService.Profile)  
 		}
 
 		users := api.Group("/users")
 		users.Use(middleware.AuthMiddleware())
-
 		{
 			users.GET("", userService.GetAllUsers)
 			users.GET("/:id", userService.GetUserByID)
@@ -42,18 +37,18 @@ func SetupRouter(r *gin.Engine, authService *service.AuthService, userService *s
 		ach := api.Group("/achievements")
 		ach.Use(middleware.AuthMiddleware())
 		{
-			ach.GET("", achService.GetList)       // 1. List
-			ach.GET("/:id", achService.GetDetail) // 2. Detail
-			ach.POST("", achService.Create)       // 3. Create
-			ach.PUT("/:id", achService.Update)    // 4. Update
-			ach.DELETE("/:id", achService.Delete) // 5. Delete
+			ach.GET("", achService.GetList)       
+			ach.GET("/:id", achService.GetDetail) 
+			ach.POST("", achService.Create)      
+			ach.PUT("/:id", achService.Update)    
+			ach.DELETE("/:id", achService.Delete) 
 
-			ach.POST("/:id/submit", achService.Submit) // 6. Submit
-			ach.POST("/:id/verify", achService.Verify) // 7. Verify
-			ach.POST("/:id/reject", achService.Reject) // 8. Reject
+			ach.POST("/:id/submit", achService.Submit) 
+			ach.POST("/:id/verify", achService.Verify) 
+			ach.POST("/:id/reject", achService.Reject) 
 
-			ach.GET("/:id/history", achService.GetHistory)            // 9. History
-			ach.POST("/:id/attachments", achService.UploadAttachment) // 10. Upload
+			ach.GET("/:id/history", achService.GetHistory)            
+			ach.POST("/:id/attachments", achService.UploadAttachment) 
 		}
 
 		mahasiswa := api.Group("/mahasiswa")
@@ -64,7 +59,7 @@ func SetupRouter(r *gin.Engine, authService *service.AuthService, userService *s
 			mahasiswa.GET("/:id/achievements", mhsService.GetAchievements)
 			mahasiswa.PUT("/:id/advisor", mhsService.UpdateAdvisor)
 		}
-
+		
 		dosen := api.Group("/dosen")
 		dosen.Use(middleware.AuthMiddleware())
 		{

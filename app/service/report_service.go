@@ -1,7 +1,7 @@
 package service
 
 import (
-    "pelaporan_prestasi/app/models/dto" // Pastikan import DTO untuk mapping response
+    "pelaporan_prestasi/app/models/dto" 
     "pelaporan_prestasi/app/repository"
     "github.com/gin-gonic/gin"
 )
@@ -9,7 +9,7 @@ import (
 type ReportService struct {
     Repo    *repository.ReportRepository
     MhsRepo *repository.MahasiswaRepository
-    AchRepo *repository.AchievementRepository // Tambahkan ini untuk akses data prestasi
+    AchRepo *repository.AchievementRepository 
 }
 
 func NewReportService(repo *repository.ReportRepository, mhsRepo *repository.MahasiswaRepository, achRepo *repository.AchievementRepository) *ReportService {
@@ -36,7 +36,6 @@ func (s *ReportService) GetGlobalStats(c *gin.Context) {
         c.JSON(200, gin.H{"scope": "Personal", "data": stats})
 
     } else if loginRoleID == RoleDosen {
-        // Logika Dosen Wali bisa ditambahkan di sini untuk melihat statistik bimbingan
         c.JSON(200, gin.H{"scope": "Dosen Wali", "message": "Statistik bimbingan Anda"})
     }
 }
@@ -52,20 +51,17 @@ func (s *ReportService) GetStudentReport(c *gin.Context) {
     loginUserID := c.GetString("user_id")
     loginRoleID := c.GetString("role_id")
 
-    // 1. Ambil info profil mahasiswa
     mhs, err := s.MhsRepo.GetByID(c.Request.Context(), studentID)
     if err != nil {
         c.JSON(404, gin.H{"error": "Mahasiswa tidak ditemukan"})
         return
     }
 
-    // 2. Cek Privasi
     if loginRoleID == RoleMahasiswa && mhs.UserID != loginUserID {
         c.JSON(403, gin.H{"error": "Forbidden: Anda hanya bisa melihat laporan Anda sendiri"})
         return
     }
 
-    // 3. Ambil data prestasi LANGSUNG
     refs, _ := s.AchRepo.FindRefsByStudentID(c.Request.Context(), mhs.UserID)
     var achievements []dto.AchievementResponse
     
@@ -76,9 +72,8 @@ func (s *ReportService) GetStudentReport(c *gin.Context) {
         }
     }
 
-    // 4. Tampilkan semua data dalam satu response
     c.JSON(200, gin.H{
         "student_info": mhs,
-        "achievements": achievements, // Data prestasi muncul di sini, bukan cuma link
+        "achievements": achievements, 
     })
 }

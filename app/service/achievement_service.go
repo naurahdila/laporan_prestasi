@@ -23,7 +23,6 @@ func NewAchievementService(repo *repository.AchievementRepository) *AchievementS
 	return &AchievementService{Repo: repo}
 }
 
-// Request Body Structs
 type CreateAchievementRequest struct {
 	Title           string   `form:"title" binding:"required"`
 	Description     string   `form:"description" binding:"required"`
@@ -127,32 +126,27 @@ func (s *AchievementService) Create(c *gin.Context) {
 		return
 	}
 
-	// 1. Bind Form Data (Bukan JSON lagi)
 	var req CreateAchievementRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Input Salah: " + err.Error()})
 		return
 	}
 
-	// 2. Handle File Upload (Optional/Required terserah)
 	var attachments []mongodb.Attachment
-	file, errFile := c.FormFile("file") // Ambil file dengan key "file"
+	file, errFile := c.FormFile("file") 
 
-	if errFile == nil { // Jika ada file yang diupload
-		// Validasi Ekstensi
+	if errFile == nil { 
 		ext := strings.ToLower(filepath.Ext(file.Filename))
 		if ext != ".pdf" && ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
 			c.JSON(400, gin.H{"error": "Format file harus PDF atau Gambar!"})
 			return
 		}
 
-		// Buat Folder Upload jika belum ada
 		uploadDir := "uploads"
 		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 			os.Mkdir(uploadDir, 0755)
 		}
 
-		// Simpan File
 		filename := fmt.Sprintf("%s_%s%s", c.GetString("user_id"), uuid.New().String(), ext)
 		savePath := filepath.Join(uploadDir, filename)
 		if err := c.SaveUploadedFile(file, savePath); err != nil {
@@ -160,7 +154,6 @@ func (s *AchievementService) Create(c *gin.Context) {
 			return
 		}
 
-		// Tambahkan ke array attachments
 		attachments = append(attachments, mongodb.Attachment{
 			FileName:   file.Filename,
 			FileURL:    savePath,
@@ -169,7 +162,6 @@ func (s *AchievementService) Create(c *gin.Context) {
 		})
 	}
 
-	// 3. Simpan ke MongoDB
 	mongoData := mongodb.Achievement{
 		StudentID:       c.GetString("user_id"),
 		Title:           req.Title,
@@ -177,8 +169,8 @@ func (s *AchievementService) Create(c *gin.Context) {
 		AchievementType: req.AchievementType,
 		Tags:            req.Tags,
 		Points:          req.Points,
-		Attachments:     attachments,                  // Masukkan file tadi
-		Details:         make(map[string]interface{}), // Kosong dulu biar aman
+		Attachments:     attachments,                  
+		Details:         make(map[string]interface{}), 
 	}
 
 	mongoID, err := s.Repo.InsertMongo(c.Request.Context(), &mongoData)
@@ -187,19 +179,15 @@ func (s *AchievementService) Create(c *gin.Context) {
 		return
 	}
 
-	// 4. Simpan ke Postgres
 	pgRef := postgres.AchievementReference{
 		StudentID:          c.GetString("user_id"),
 		MongoAchievementID: mongoID,
 	}
-	// Perbaikan: Cek error Postgres dengan teliti
 	if err := s.Repo.InsertPostgres(c.Request.Context(), &pgRef); err != nil {
-		// Jika ini error, berarti FK Constraint (User tidak ada) atau DB Error
 		c.JSON(500, gin.H{"error": "Postgres Reference Error: " + err.Error()})
 		return
 	}
 
-	// 5. Simpan History (Perbaikan: Cek Error!)
 	hist := postgres.AchievementHistory{
 		AchievementID:  pgRef.ID,
 		ChangedBy:      c.GetString("user_id"),
@@ -208,9 +196,7 @@ func (s *AchievementService) Create(c *gin.Context) {
 		Remarks:        "Created with file",
 	}
 	if err := s.Repo.AddHistory(c.Request.Context(), hist); err != nil {
-		// Kita log errornya, tapi jangan gagalkan request utama (opsional)
 		fmt.Printf("⚠️ Gagal catat history: %v\n", err)
-		// Kalau mau strict: c.JSON(500, ...); return
 	}
 
 	c.JSON(201, gin.H{
@@ -247,9 +233,6 @@ func (s *AchievementService) Update(c *gin.Context) {
 		}
 	}
 
-	// Kembali pakai JSON untuk update teks saja (atau mau ubah jadi form juga boleh)
-	// Di sini saya biarkan JSON agar konsisten dengan request sebelumnya
-	// Kecuali Mas mau update file juga di sini, maka harus ganti binding form.
 	type UpdateReq struct {
 		Title           string   `json:"title"`
 		Description     string   `json:"description"`
@@ -373,7 +356,6 @@ func (s *AchievementService) Verify(c *gin.Context) {
 // @Param body body VerifyRequest true "Body"
 // @Router /achievements/{id}/reject [post]
 func (s *AchievementService) Reject(c *gin.Context) {
-	// Reusing Verify Logic but explicit endpoint
 	s.Verify(c)
 }
 

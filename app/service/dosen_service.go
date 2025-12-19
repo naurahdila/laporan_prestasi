@@ -30,11 +30,9 @@ func (s *DosenService) GetAll(c *gin.Context) {
 
     var filteredData []repository.DosenData
     for _, d := range data {
-        // Jika Admin, bisa melihat semua dosen
         if loginRoleID == RoleAdmin {
             filteredData = append(filteredData, d)
         } else if loginRoleID == RoleDosen && d.UserID == loginUserID {
-            // Jika Dosen (Anank), hanya melihat dirinya sendiri
             filteredData = append(filteredData, d)
         }
     }
@@ -55,9 +53,6 @@ func (s *DosenService) GetAdvisees(c *gin.Context) {
 	dosenID := c.Param("id") 
 	loginUserID := c.GetString("user_id")
 	loginRoleID := c.GetString("role_id")
-
-	// Pengecekan: Dosen hanya boleh melihat mahasiswanya sendiri
-	// Kita ambil data dosen dulu berdasarkan ID tabel dosen
 	dosen, err := s.Repo.GetByID(c.Request.Context(), dosenID)
 	if err != nil {
 		c.JSON(404, gin.H{"error": "Dosen tidak ditemukan"})

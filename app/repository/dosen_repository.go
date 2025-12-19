@@ -13,7 +13,6 @@ func NewDosenRepository(pg *pgxpool.Pool) *DosenRepository {
 	return &DosenRepository{PgPool: pg}
 }
 
-// Struct data dosen sesuai kolom di DB
 type DosenData struct {
 	ID     string `json:"id"`
 	UserID string `json:"user_id"`
@@ -22,7 +21,6 @@ type DosenData struct {
 }
 
 func (r *DosenRepository) GetAll(ctx context.Context) ([]DosenData, error) {
-	// Gunakan u.full_name sesuai struct User Anda
 	query := `
 		SELECT d.id, d.user_id, u.full_name, d.dosen_id
 		FROM dosen d
@@ -36,7 +34,6 @@ func (r *DosenRepository) GetAll(ctx context.Context) ([]DosenData, error) {
 	var list []DosenData
 	for rows.Next() {
 		var d DosenData
-		// Pastikan scan 4 kolom
 		err := rows.Scan(&d.ID, &d.UserID, &d.Name, &d.NIP)
 		if err != nil { return nil, err }
 		list = append(list, d)
@@ -52,7 +49,6 @@ func (r *DosenRepository) GetByID(ctx context.Context, id string) (*DosenData, e
 		WHERE d.id = $1`
 	
 	var d DosenData
-	// Pastikan scan 4 kolom
 	err := r.PgPool.QueryRow(ctx, query, id).Scan(&d.ID, &d.UserID, &d.Name, &d.NIP)
 	if err != nil { return nil, err }
 	return &d, nil
@@ -80,7 +76,6 @@ func (r *DosenRepository) GetAdvisees(ctx context.Context, dosenID string) ([]Ad
 	var list []AdviseeData
 	for rows.Next() {
 		var a AdviseeData
-		// Scan 4 kolom: id, name, nim, program_study
 		err := rows.Scan(&a.ID, &a.Name, &a.NIM, &a.ProgramStudy)
 		if err != nil { return nil, err }
 		list = append(list, a)

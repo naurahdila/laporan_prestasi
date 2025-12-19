@@ -119,7 +119,6 @@ func (r *AchievementRepository) DeleteRef(ctx context.Context, id string) error 
 	return err
 }
 
-// --- HISTORY & CHECKS ---
 
 func (r *AchievementRepository) AddHistory(ctx context.Context, h postgres.AchievementHistory) error {
 	query := `INSERT INTO achievement_histories (achievement_id, changed_by, previous_status, new_status, remarks, created_at) VALUES ($1, $2, $3, $4, $5, NOW())`
@@ -142,7 +141,6 @@ func (r *AchievementRepository) GetHistory(ctx context.Context, achievementID st
 }
 
 func (r *AchievementRepository) IsAdvisorOfRef(ctx context.Context, refID, advisorUserID string) (bool, error) {
-    // LOGIKA FINAL: JOIN ke DOSEN untuk mencocokkan USER_ID
     query := `
         SELECT EXISTS (
             SELECT 1 
@@ -154,7 +152,6 @@ func (r *AchievementRepository) IsAdvisorOfRef(ctx context.Context, refID, advis
         )`
     
     var exists bool
-    // $1 = ID Prestasi, $2 = ID Token Dosen (User ID)
     err := r.PgPool.QueryRow(ctx, query, refID, advisorUserID).Scan(&exists)
     return exists, err
 }
