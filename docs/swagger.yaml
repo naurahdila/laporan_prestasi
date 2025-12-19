@@ -1,0 +1,722 @@
+basePath: /api/v1
+definitions:
+  dto.AchievementResponse:
+    properties:
+      content:
+        $ref: '#/definitions/mongodb.Achievement'
+      ref_id:
+        type: string
+      rejection_note:
+        type: string
+      status:
+        type: string
+    type: object
+  mongodb.Achievement:
+    properties:
+      achievementType:
+        type: string
+      attachments:
+        items:
+          $ref: '#/definitions/mongodb.Attachment'
+        type: array
+      createdAt:
+        type: string
+      deleted:
+        type: boolean
+      description:
+        type: string
+      details:
+        $ref: '#/definitions/mongodb.AchievementDetails'
+      id:
+        type: string
+      points:
+        type: integer
+      studentId:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  mongodb.AchievementDetails:
+    additionalProperties: true
+    type: object
+  mongodb.Attachment:
+    properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      uploadedAt:
+        type: string
+    type: object
+  service.CreateAchievementRequest:
+    properties:
+      achievement_type:
+        type: string
+      description:
+        type: string
+      points:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    required:
+    - achievement_type
+    - description
+    - title
+    type: object
+  service.CreateUserRequest:
+    properties:
+      email:
+        example: mhs_baru@unair.ac.id
+        type: string
+      full_name:
+        example: Budi Santoso
+        type: string
+      password:
+        example: rahasia123
+        minLength: 6
+        type: string
+      role_id:
+        example: 22222222-2222-2222-2222-222222222222
+        type: string
+      username:
+        example: mahasiswa_baru
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - role_id
+    - username
+    type: object
+  service.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: mahasiswa123
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  service.UpdateAdvisorRequest:
+    properties:
+      advisor_id:
+        type: string
+    required:
+    - advisor_id
+    type: object
+  service.UpdateRoleRequest:
+    properties:
+      role_id:
+        example: 33333333-3333-3333-3333-333333333333
+        type: string
+    required:
+    - role_id
+    type: object
+  service.UpdateUserRequest:
+    properties:
+      email:
+        example: email_baru@unair.ac.id
+        type: string
+      full_name:
+        example: Budi Santoso Gelar Baru
+        type: string
+      role_id:
+        example: 22222222-2222-2222-2222-222222222222
+        type: string
+    type: object
+  service.VerifyRequest:
+    properties:
+      notes:
+        example: Oke bagus
+        type: string
+      status:
+        example: VERIFIED
+        type: string
+    required:
+    - status
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Dokumentasi API backend pelaporan prestasi mahasiswa.
+  title: Sistem Pelaporan Prestasi API
+  version: "1.0"
+paths:
+  /achievements:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.AchievementResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List Achievements
+      tags:
+      - Achievements
+    post:
+      consumes:
+      - multipart/form-data
+      description: Kirim data + file sekaligus (Multipart Form)
+      parameters:
+      - description: Judul
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Deskripsi
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Tipe
+        in: formData
+        name: achievement_type
+        required: true
+        type: string
+      - description: Poin
+        in: formData
+        name: points
+        type: integer
+      - description: File Bukti (PDF/Image)
+        in: formData
+        name: file
+        type: file
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Achievement with File
+      tags:
+      - Achievements
+  /achievements/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Delete Achievement
+      tags:
+      - Achievements
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AchievementResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Detail
+      tags:
+      - Achievements
+    put:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateAchievementRequest'
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Update Achievement Content
+      tags:
+      - Achievements
+  /achievements/{id}/attachments:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file bukti (bisa berkali-kali).
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Upload Attachment
+      tags:
+      - Achievements
+  /achievements/{id}/history:
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get History
+      tags:
+      - Achievements
+  /achievements/{id}/reject:
+    post:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.VerifyRequest'
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Reject Achievement (Dosen)
+      tags:
+      - Achievements
+  /achievements/{id}/submit:
+    post:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Submit for Verification
+      tags:
+      - Achievements
+  /achievements/{id}/verify:
+    post:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.VerifyRequest'
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Verify Achievement (Dosen)
+      tags:
+      - Achievements
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Masuk sistem dan dapatkan access token + refresh token
+      parameters:
+      - description: Kredensial Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login User
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      description: Keluar dari sistem
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout User
+      tags:
+      - Authentication
+  /auth/profile:
+    get:
+      description: Mendapatkan data user yang sedang login (Butuh Token)
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get User Profile
+      tags:
+      - Authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Dapatkan token baru menggunakan refresh token
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            refreshToken:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh Access Token
+      tags:
+      - Authentication
+  /dosen:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get All Dosen
+      tags:
+      - Dosen
+  /dosen/{id}/advisees:
+    get:
+      parameters:
+      - description: ID Dosen (Tabel Dosen)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get Dosen Advisees (With Authorization)
+      tags:
+      - Dosen
+  /mahasiswa:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get All Mahasiswa (Filtered by Role)
+      tags:
+      - Mahasiswa
+  /mahasiswa/{id}:
+    get:
+      parameters:
+      - description: ID Mahasiswa
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get Mahasiswa Detail (Privacy Check)
+      tags:
+      - Mahasiswa
+  /mahasiswa/{id}/achievements:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar prestasi mahasiswa
+      parameters:
+      - description: ID Mahasiswa
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Mahasiswa Achievements
+      tags:
+      - Mahasiswa
+  /mahasiswa/{id}/advisor:
+    put:
+      consumes:
+      - application/json
+      description: Mengubah dosen wali mahasiswa (Admin Only)
+      parameters:
+      - description: ID Mahasiswa
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateAdvisorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Dosen Wali
+      tags:
+      - Mahasiswa
+  /reports/statistics:
+    get:
+      description: Melihat statistik total mahasiswa dan prestasi (Admin & Dosen)
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get Global Statistics
+      tags:
+      - Reports
+  /reports/student/{id}:
+    get:
+      description: Melihat ringkasan laporan prestasi per mahasiswa
+      parameters:
+      - description: ID Mahasiswa
+        in: path
+        name: id
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get Individual Student Report
+      tags:
+      - Reports
+  /users:
+    get:
+      description: Hanya Admin.
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get All Users
+      tags:
+      - Users (Admin)
+    post:
+      description: Hanya Admin.
+      parameters:
+      - description: Data User
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateUserRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create User (Manual)
+      tags:
+      - Users (Admin)
+  /users/{id}:
+    delete:
+      description: Hanya Admin.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Soft Delete User
+      tags:
+      - Users (Admin)
+    get:
+      description: Admin bisa lihat siapa saja. User biasa hanya bisa lihat dirinya
+        sendiri.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get User Detail
+      tags:
+      - Users (Admin)
+    put:
+      description: Admin bebas edit. User biasa hanya edit diri sendiri.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data Update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateUserRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Data (Nama/Email)
+      tags:
+      - Users (Admin)
+  /users/{id}/role:
+    put:
+      description: Khusus Admin untuk mengubah jabatan user.
+      parameters:
+      - description: User ID Target
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role ID Baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateRoleRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change User Role (Promote/Demote)
+      tags:
+      - Users (Admin)
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
